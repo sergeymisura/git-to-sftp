@@ -89,7 +89,7 @@ if last:
 	for file in diff.splitlines():
 		(flag, path) = file.split('\t', 2)
 		if options.git_folder <> '':
-			if path.indexOf(options.git_folder + '/') != 2:
+			if path.rfind(options.git_folder + '/') != 0:
 				continue
 		if flag == 'M' or flag == 'C' or flag == 'R' or flag == 'A':
 			copy.append(path)
@@ -113,15 +113,23 @@ if last:
 	response = sys.stdin.readline()
 	if response.strip() == "yes":
 		for file in delete:
-			print pexpect.run('rm -v "/mnt/remote/' + file + '"')
+			if options.git_folder != '':
+				dest = file[len(options.git_folder) + 1:]
+			else:
+				dest = file
+			print pexpect.run('rm -v /mnt/remote/' + dest.replace(' ', '\\ '))
 		for file in copy:
-			cp = pexpect.spawn('cp -v "/tmp/repo/' + file + '" "/mnt/remote/' + file + '"')
+			if options.git_folder != '':
+				dest = file[len(options.git_folder) + 1:]
+			else:
+				dest = file
+			cp = pexpect.spawn('cp -v /tmp/repo/' + file.replace(' ', '\\ ') + ' /mnt/remote/' + dest.replace(' ', '\\ '))
 			cp.logfile = sys.stdout
 			if cp.expect(['No such file or directory', pexpect.EOF]) == 0:
 				cp.expect(pexpect.EOF)
 				print "Creating directory " + file.rsplit("/", 1)[0]
 				os.makedirs('/mnt/remote/' + file.rsplit("/", 1)[0])
-				print pexpect.run('cp -v "/tmp/repo/' + file + '" "/mnt/remote/' + file + '"')
+				print pexpect.run('cp -v /tmp/repo/' + file.replace(' ', '\\ ') + ' /mnt/remote/' + dest.replace(' ', '\\ '))
 	else:
 		print "See you later!"
 		exit()
