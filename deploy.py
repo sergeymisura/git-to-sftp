@@ -9,12 +9,19 @@ parser.add_option("--git")
 parser.add_option("--git_branch")
 parser.add_option("--git_user")
 parser.add_option("--git_password")
+parser.add_option("--git_folder", default='')
 parser.add_option("--sftp_user")
 parser.add_option("--sftp_host")
 parser.add_option("--sftp_path", default='/')
 parser.add_option("--sftp_password")
 
 (options, args) = parser.parse_args()
+
+if len(options.git_folder) > 0 and options.git_folder[0] == '/':
+	options.git_folder = options.git_folder[1:]
+
+if len(options.git_folder) > 0 and options.git_folder[len(options.git_folder) - 1] == '/':
+	options.git_folder = options.git_folder[:len(options.git_folder) - 1]
 
 print "Cloning repository..."
 
@@ -51,7 +58,7 @@ umount = pexpect.spawn("fusermount -u /mnt/remote")
 umount.logfile = sys.stdout
 umount.expect(pexpect.EOF)
 
-mount = pexpect.spawn("sshfs " + options.sftp_user + "@" + options.sftp_host + ":" + options.sftp_path + " /mnt/remote")
+mount = pexpect.spawn("sshfs " + options.sftp_user + "@" + options.sftp_host + ":" + options.sftp_path + " /mnt/remote", timeout=3000)
 mount.logfile = sys.stdout
 
 while mount.expect(['passphrase', 'password']) == 0:
@@ -81,6 +88,9 @@ if last:
 	
 	for file in diff.splitlines():
 		(flag, path) = file.split('\t', 2)
+		if options.git_folder <> '':
+			if path.indexOf(options.git_folder + '/') != 2:
+				continue
 		if flag == 'M' or flag == 'C' or flag == 'R' or flag == 'A':
 			copy.append(path)
 		elif flag == 'D':
@@ -103,15 +113,15 @@ if last:
 	response = sys.stdin.readline()
 	if response.strip() == "yes":
 		for file in delete:
-			print pexpect.run('rm -v /mnt/remote/' + file)
+			print pexpect.run('rm -v "/mnt/remote/' + file + '"')
 		for file in copy:
-			cp = pexpect.spawn('cp -v /tmp/repo/' + file + ' /mnt/remote/' + file)
+			cp = pexpect.spawn('cp -v "/tmp/repo/' + file + '" "/mnt/remote/' + file + '"')
 			cp.logfile = sys.stdout
 			if cp.expect(['No such file or directory', pexpect.EOF]) == 0:
 				cp.expect(pexpect.EOF)
 				print "Creating directory " + file.rsplit("/", 1)[0]
 				os.makedirs('/mnt/remote/' + file.rsplit("/", 1)[0])
-				print pexpect.run('cp -v /tmp/repo/' + file + ' /mnt/remote/' + file)
+				print pexpect.run('cp -v "/tmp/repo/' + file + '" "/mnt/remote/' + file + '"')
 	else:
 		print "See you later!"
 		exit()
@@ -121,7 +131,7 @@ else:
 	response = sys.stdin.readline()
 	if response.strip() == "yes":
 		print "Copying everything..."
-		cp = pexpect.spawn("bash -c 'cp -rvf /tmp/repo/* /mnt/remote'", timeout=3000)
+		cp = pexpect.spawn("bash -c 'cp -rvf \"/tmp/repo/" + options.git_folder + "/*\" /mnt/remote'", timeout=3000)
 		cp.logfile = sys.stdout
 		cp.expect(pexpect.EOF)
 	else:
