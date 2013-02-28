@@ -47,7 +47,7 @@ if options.git_branch:
 	git.logfile = sys.stdout
 	git.expect(pexpect.EOF)
 
-hash = pexpect.run("git --no-pager log --color=never --pretty=format:%H -n 1")
+hash = pexpect.run("git --no-pager log --pretty=format:%H -n 1")
 
 print ""
 print "Top commit hash: " + hash
@@ -131,7 +131,7 @@ else:
 	response = sys.stdin.readline()
 	if response.strip() == "yes":
 		print "Copying everything..."
-		cp = pexpect.spawn("bash -c 'cp -rvf \"/tmp/repo/" + options.git_folder + "/*\" /mnt/remote'", timeout=3000)
+		cp = pexpect.spawn("bash -c 'cp -rvf /tmp/repo/" + options.git_folder.replace(' ', '\\ ') + "/* /mnt/remote'", timeout=3000)
 		cp.logfile = sys.stdout
 		cp.expect(pexpect.EOF)
 	else:
