@@ -38,7 +38,7 @@ if os.path.exists(repo_dir):
 	os.chdir(repo_dir)
 	git = pexpect.spawn("git pull", timeout=300)
 else:
-	git = pexpect.spawn("git clone " + options.git + repo_dir, timeout=300)
+	git = pexpect.spawn("git clone " + options.git + ' ' + repo_dir, timeout=300)
 
 git.logfile = sys.stdout
 
