@@ -136,8 +136,8 @@ if last:
 			cp.logfile = sys.stdout
 			if cp.expect(['No such file or directory', pexpect.EOF]) == 0:
 				cp.expect(pexpect.EOF)
-				print "Creating directory " + file.rsplit("/", 1)[0]
-				os.makedirs('/mnt/remote/' + file.rsplit("/", 1)[0])
+				print "Creating directory " + dest.rsplit("/", 1)[0]
+				os.makedirs('/mnt/remote/' + dest.rsplit("/", 1)[0])
 				print pexpect.run('cp -v ' + repo_dir + '/' + file.replace(' ', '\\ ') + ' /mnt/remote/' + dest.replace(' ', '\\ '))
 	else:
 		print "See you later!"
